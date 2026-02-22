@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCENT OS | The Sensory Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rose-gold: #E6B7A9;
+            --champagne: #F2D7A6;
+            --matte-black: #0F0F0F;
+            --warm-white: #F8F6F4;
+            --accent-glow: rgba(230, 183, 169, 0.25);
+        }
+
+        body {
+            background-color: var(--matte-black);
+            color: var(--warm-white);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+
+        /* --- VISUAL ATMOSPHERE --- */
+        #scene-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: radial-gradient(circle at 50% 50%, #1a1a1a 0%, #0f0f0f 100%);
+            transition: background 2s ease;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.35;
+            transition: all 3s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+        }
+
+        .grain {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.05;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3%3Ffilter id='noiseFilter'%3E%3FfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3F/filter%3E%3Frect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3F/svg%3E");
+        }
+
+        /* --- LUXURY ANIMATIONS --- */
+        @keyframes letterSpacing {
+            from { letter-spacing: 0.8em; opacity: 0; filter: blur(10px); }
+            to { letter-spacing: 0.3em; opacity: 1; filter: blur(0); }
+        }
+
+        @keyframes breathing {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+
+        .animate-reveal-text { animation: letterSpacing 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .breathing-ui { animation: breathing 8s ease-in-out infinite; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        /* --- MAGNETIC BUTTONS --- */
+        .magnetic-wrap {
+            display: inline-block;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .btn-luxury {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            border: 1px solid rgba(230, 183, 169, 0.4);
+            cursor: pointer;
+        }
+
+        .btn-luxury::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 300%; height: 300%;
+            background: radial-gradient(circle, rgba(242, 215, 166, 0.15) 0%, transparent 70%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.9s ease;
+        }
+
+        .btn-luxury:hover::before { transform: translate(-50%, -50%) scale(1); }
+        .btn-luxury:hover { 
+            border-color: var(--rose-gold);
+            box-shadow: 0 0 40px var(--accent-glow);
+            transform: translateY(-3px);
+        }
+
+        .pill-active {
+            background: var(--rose-gold) !important;
+            color: var(--matte-black) !important;
+            border-color: var(--rose-gold) !important;
+            opacity: 1 !important;
+            transform: scale(1.05);
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        #cursor-aura {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(230, 183, 169, 0.07) 0%, transparent 70%);
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        /* --- STEP NAVIGATION SCENES --- */
+        .step-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .step-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chart-circle {
+            transition: stroke-dasharray 2.5s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+            filter: drop-shadow(0 0 12px currentColor);
+        }
+    </style>
+</head>
+<body class="antialiased select-none overflow-y-auto min-h-screen">
+
+    <div id="cursor-aura"></div>
+    <div class="grain"></div>
+    <div id="scene-bg">
+        <div id="blob1" class="blob w-[700px] h-[700px] bg-[#E6B7A9] -top-60 -left-60"></div>
+        <div id="blob2" class="blob w-[600px] h-[600px] bg-[#F2D7A6] -bottom-20 -right-40"></div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F0F0F] transition-opacity duration-[1500ms]">
+        <div class="text-center">
+            <h1 class="serif text-7xl md:text-9xl mb-8 animate-reveal-text">SCENT OS</h1>
+            <div class="h-[1px] w-32 bg-rose-300 mx-auto opacity-40"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full p-10 flex justify-between items-center z-50">
+        <div class="serif text-4xl font-light tracking-tighter hover:opacity-50 transition-opacity cursor-pointer">S.OS</div>
+        <div class="flex gap-16 items-center">
+            <span class="text-[11px] uppercase tracking-[0.5em] text-white/40 hidden md:block">Personalized Intelligence v2.5</span>
+            <button onclick="resetApp()" class="text-[11px] uppercase tracking-widest text-rose-200/60 hover:text-white transition-colors">Reset</button>
+        </div>
+    </nav>
+
+    <main class="relative z-10 min-h-screen flex flex-col items-center justify-center px-8 pt-20">
+        
+        <!-- Scene 0: Welcome -->
+        <section id="step-0" class="step-content active w-full max-w-5xl text-center">
+            <span class="text-rose-300 text-[14px] uppercase tracking-[0.6em] mb-10 block opacity-70">Architecting Your Aura</span>
+            <h2 class="serif text-6xl md:text-9xl mb-16 leading-[1.1] font-light">
+                Sensory <br/> <span class="italic shimmer-text">Convergence.</span>
+            </h2>
+            <div class="magnetic-wrap">
+                <button onclick="nextStep()" class="btn-luxury px-16 py-7 rounded-full text-[12px] uppercase tracking-[0.5em] bg-transparent backdrop-blur-sm">
+                    Begin Synthesis
+                </button>
+            </div>
+        </section>
+
+        <!-- Scene 1: Environment -->
+        <section id="step-1" class="step-content w-full max-w-4xl">
+            <div class="text-center mb-20">
+                <h2 class="serif text-5xl md:text-6xl font-light">Ambient Syncing</h2>
+                <p class="text-white/50 text-sm tracking-[0.3em] mt-6">HARMONIZING WITH LOCAL BIOMETRICS</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 rounded-[40px] overflow-hidden glass">
+                <div class="p-16 border-r border-b border-white/5">
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-rose-300/60 mb-6">Geolocation</p>
+                    <p id="ui-location" class="serif text-3xl">Scanning...</p>
+                </div>
+                <div class="p-16 border-b border-white/5">
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-rose-300/60 mb-6">Luminosity</p>
+                    <p id="ui-weather" class="serif text-3xl">Calculating...</p>
+                </div>
+                <div class="p-16 border-r border-white/5">
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-rose-300/60 mb-6">Thermal Index</p>
+                    <p id="ui-temp" class="serif text-3xl">--°C</p>
+                </div>
+                <div class="p-16">
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-rose-300/60 mb-6">Circadian Cycle</p>
+                    <p id="ui-time" class="serif text-3xl">Analysing...</p>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-20">
+                <button onclick="nextStep()" id="btn-env" class="btn-luxury px-16 py-7 rounded-full text-[12px] uppercase tracking-[0.5em] opacity-20 pointer-events-none" disabled>
+                    Awaiting Telemetry
+                </button>
+            </div>
+        </section>
+
+        <!-- Scene 2: Mood & Occasion -->
+        <section id="step-2" class="step-content w-full max-w-5xl text-center">
+            <h2 class="serif text-6xl md:text-7xl mb-20 font-light italic">Choose your intent.</h2>
+            
+            <div class="space-y-24">
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-white/30 mb-10">Contextual Engagement</p>
+                    <div class="flex flex-wrap justify-center gap-6">
+                        <button onclick="toggleChoice('occasion', 'Work', this)" class="btn-luxury px-10 py-5 rounded-full text-[12px] uppercase tracking-widest glass">Work & Focus</button>
+                        <button onclick="toggleChoice('occasion', 'Evening', this)" class="btn-luxury px-10 py-5 rounded-full text-[12px] uppercase tracking-widest glass">Social Evening</button>
+                        <button onclick="toggleChoice('occasion', 'Relax', this)" class="btn-luxury px-10 py-5 rounded-full text-[12px] uppercase tracking-widest glass">Relaxation</button>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[11px] uppercase tracking-[0.4em] text-white/30 mb-10">Aura Projection</p>
+                    <div class="flex flex-wrap justify-center gap-10">
+                        <button onclick="toggleChoice('mood', 'Confident', this)" class="group relative px-4 py-2">
+                            <span class="serif text-4xl md:text-6xl opacity-30 group-hover:opacity-100 transition-all duration-700 hover:tracking-widest cursor-pointer">Confident</span>
+                        </button>
+                        <button onclick="toggleChoice('mood', 'Calm', this)" class="group relative px-4 py-2">
+                            <span class="serif text-4xl md:text-6xl opacity-30 group-hover:opacity-100 transition-all duration-700 hover:tracking-widest cursor-pointer">Calm</span>
+                        </button>
+                        <button onclick="toggleChoice('mood', 'Romantic', this)" class="group relative px-4 py-2">
+                            <span class="serif text-4xl md:text-6xl opacity-30 group-hover:opacity-100 transition-all duration-700 hover:tracking-widest cursor-pointer">Romantic</span>
+                        </button>
+                        <button onclick="toggleChoice('mood', 'Mysterious', this)" class="group relative px-4 py-2">
+                            <span class="serif text-4xl md:text-6xl opacity-30 group-hover:opacity-100 transition-all duration-700 hover:tracking-widest cursor-pointer">Mysterious</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-24 flex justify-center">
+                <button onclick="nextStep()" class="btn-luxury px-16 py-7 rounded-full text-[12px] uppercase tracking-[0.5em] glass border-white/20">
+                    Continue Exploration
+                </button>
+            </div>
+        </section>
+
+        <!-- Scene 3: Olfactory -->
+        <section id="step-3" class="step-content w-full max-w-4xl text-center">
+            <h2 class="serif text-6xl md:text-7xl mb-20">The Olfactory Palette</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-8 mb-24">
+                <button onclick="toggleMultiChoice('notes', 'Floral', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Floral</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Jasmine & Rose</span>
+                </button>
+                <button onclick="toggleMultiChoice('notes', 'Woody', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Woody</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Sandalwood</span>
+                </button>
+                <button onclick="toggleMultiChoice('notes', 'Citrus', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Citrus</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Bergamot</span>
+                </button>
+                <button onclick="toggleMultiChoice('notes', 'Musky', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Musky</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Amber Cloud</span>
+                </button>
+                <button onclick="toggleMultiChoice('notes', 'Spicy', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Spicy</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Pink Pepper</span>
+                </button>
+                <button onclick="toggleMultiChoice('notes', 'Fresh', this)" class="glass p-12 rounded-3xl hover:bg-white/10 transition-all border border-transparent hover:border-rose-300/30">
+                    <span class="block serif text-3xl mb-3">Fresh</span>
+                    <span class="text-[10px] uppercase tracking-[0.3em] opacity-50">Sea Salt</span>
+                </button>
+            </div>
+
+            <div class="magnetic-wrap">
+                <button onclick="generateScent()" class="btn-luxury px-20 py-8 rounded-full text-[13px] uppercase tracking-[0.6em] bg-white text-black font-bold">
+                    Synthesize Identity
+                </button>
+            </div>
+        </section>
+
+        <!-- Scene 4: Reveal Moment -->
+        <section id="step-4" class="step-content w-full max-w-xl text-center">
+            <div class="relative w-80 h-80 mx-auto mb-20 flex items-center justify-center breathing-ui">
+                <div class="absolute inset-0 rounded-full border border-rose-300/10 scale-150"></div>
+                <div class="absolute inset-0 rounded-full border border-rose-300/20 scale-125"></div>
+                <div class="absolute inset-0 rounded-full border-t border-rose-300/60 animate-spin" style="animation-duration: 5s;"></div>
+                <div class="serif text-3xl italic text-rose-100 tracking-widest" id="loading-text">Synthesizing...</div>
+            </div>
+            <p class="text-[11px] uppercase tracking-[1em] text-white/30" id="reveal-subtext">Aligning molecular structures</p>
+        </section>
+
+        <!-- Scene 5: Result Dashboard -->
+        <section id="step-5" class="step-content w-full max-w-7xl">
+            <div class="grid lg:grid-cols-2 gap-24 items-center">
+                
+                <div class="relative flex items-center justify-center">
+                    <div class="chart-container relative w-full max-w-[550px] breathing-ui">
+                        <svg viewBox="0 0 100 100" class="w-full h-auto drop-shadow-2xl -rotate-90">
+                            <circle cx="50" cy="50" r="46" fill="transparent" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+                            <g id="scent-rings"></g>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span class="text-[12px] uppercase tracking-[0.6em] text-rose-300/60 mb-4">Signature</span>
+                            <h3 id="result-name" class="serif text-6xl font-light">Ethereal 01</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-16">
+                    <div>
+                        <span class="text-rose-300 text-[12px] uppercase tracking-[0.6em] block mb-6">The Formulation</span>
+                        <h2 class="serif text-7xl md:text-8xl font-light leading-tight mb-10" id="result-title">Radiant <br/><span class="italic">Gold Wood</span></h2>
+                        <p id="result-desc" class="text-white/60 text-xl leading-relaxed font-light max-w-xl">
+                            An architectural blend optimized for your current circadian rhythm. High-altitude florals grounded by sustainable cedarwood.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-8" id="formula-breakdown">
+                        <!-- Dynamic items -->
+                    </div>
+
+                    <div class="pt-10 flex gap-8">
+                        <button onclick="saveProfile(this)" class="btn-luxury px-16 py-6 rounded-full text-[12px] uppercase tracking-[0.4em] bg-white text-black font-bold flex-1">
+                            Deploy Formula
+                        </button>
+                        <button onclick="location.reload()" class="btn-luxury px-10 py-6 rounded-full text-[12px] uppercase tracking-[0.4em] backdrop-blur-md">
+                            Recalibrate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- CORE DATA ---
+        let userData = { occasion: '', mood: '', notes: [], intensity: 2, temp: 24 };
+        const noteColors = { 'Floral': '#E6B7A9', 'Citrus': '#F2D7A6', 'Woody': '#8D7B68', 'Musky': '#DCD7C9', 'Spicy': '#A27B5C', 'Fresh': '#C0D8C0' };
+
+        // --- LUXURY INTERACTIONS ---
+        const aura = document.getElementById('cursor-aura');
+        document.addEventListener('mousemove', (e) => {
+            aura.style.left = e.clientX + 'px';
+            aura.style.top = e.clientY + 'px';
+            
+            // Subtle Parallax
+            const x = (window.innerWidth / 2 - e.clientX) / 60;
+            const y = (window.innerHeight / 2 - e.clientY) / 60;
+            document.getElementById('blob1').style.transform = `translate(${x}px, ${y}px)`;
+            document.getElementById('blob2').style.transform = `translate(${-x}px, ${-y}px)`;
+
+            // Magnetic Button Logic
+            document.querySelectorAll('.magnetic-wrap').forEach(wrap => {
+                const rect = wrap.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const distance = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+                
+                if (distance < 120) {
+                    const moveX = (e.clientX - centerX) * 0.35;
+                    const moveY = (e.clientY - centerY) * 0.35;
+                    wrap.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                } else {
+                    wrap.style.transform = `translate(0, 0)`;
+                }
+            });
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').remove(), 1500);
+            }, 2500);
+            simulateEnvironment();
+        });
+
+        function simulateEnvironment() {
+            setTimeout(() => {
+                document.getElementById('ui-location').textContent = "Paris, Place Vendôme";
+                document.getElementById('ui-weather').textContent = "Soft Evening Glow";
+                document.getElementById('ui-temp').textContent = "21°C";
+                document.getElementById('ui-time').textContent = "19:42 / Dusk";
+                
+                const btn = document.getElementById('btn-env');
+                btn.disabled = false;
+                btn.classList.remove('opacity-20', 'pointer-events-none');
+                btn.classList.add('glass', 'border-white/40');
+                btn.textContent = "Telemetry Locked";
+            }, 3000);
+        }
+
+        let currentStep = 0;
+        function nextStep() {
+            const steps = document.querySelectorAll('.step-content');
+            steps[currentStep].style.opacity = '0';
+            steps[currentStep].style.transform = 'translateY(-30px)';
+            
+            setTimeout(() => {
+                steps[currentStep].classList.remove('active');
+                currentStep++;
+                steps[currentStep].classList.add('active');
+                
+                // Background dynamics
+                if (currentStep === 2) document.getElementById('scene-bg').style.background = 'radial-gradient(circle at 50% 50%, #1f1a18 0%, #0f0f0f 100%)';
+                if (currentStep === 5) document.getElementById('scene-bg').style.background = 'radial-gradient(circle at 70% 30%, #241e1c 0%, #0f0f0f 100%)';
+                window.scrollTo(0, 0);
+            }, 800);
+        }
+
+        function toggleChoice(type, val, el) {
+            userData[type] = val;
+            
+            // Handle both button clicks and span clicks (mood text)
+            let parent = el.closest('div');
+            parent.querySelectorAll('button, .group').forEach(b => {
+                b.classList.remove('pill-active');
+                if(b.querySelector('span')) b.querySelector('span').classList.remove('opacity-100');
+            });
+            
+            el.classList.add('pill-active');
+            if(el.querySelector('span')) el.querySelector('span').classList.add('opacity-100');
+        }
+
+        function toggleMultiChoice(type, val, el) {
+            if (userData[type].includes(val)) {
+                userData[type] = userData[type].filter(i => i !== val);
+                el.classList.remove('pill-active', 'border-rose-300');
+            } else if (userData[type].length < 3) {
+                userData[type].push(val);
+                el.classList.add('pill-active', 'border-rose-300');
+            }
+        }
+
+        function generateScent() {
+            nextStep(); 
+            const phases = ["Calibrating Top Accords", "Infusing Heart Molecules", "Optimizing Base Longevity", "Finalizing Identity"];
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < phases.length) {
+                    document.getElementById('loading-text').textContent = phases[i];
+                    i++;
+                } else {
+                    clearInterval(interval);
+                    showResults();
+                }
+            }, 1200);
+        }
+
+        function showResults() {
+            let formula = { 'Floral': 15, 'Citrus': 15, 'Woody': 15, 'Musky': 15, 'Spicy': 10, 'Fresh': 10 };
+            userData.notes.forEach(n => formula[n] += 40);
+            if (userData.mood === 'Confident') formula['Woody'] += 25;
+            
+            let total = Object.values(formula).reduce((a,b)=>a+b, 0);
+            const top = Object.entries(formula).sort((a,b)=>b[1]-a[1]).slice(0, 3).map(n => [n[0], Math.round((n[1]/total)*100)]);
+
+            const ringG = document.getElementById('scent-rings');
+            ringG.innerHTML = '';
+            let r = 46;
+            top.forEach((note, idx) => {
+                const c = 2 * Math.PI * r;
+                const offset = c - (note[1]/100) * c;
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", "50"); circle.setAttribute("cy", "50"); circle.setAttribute("r", r);
+                circle.setAttribute("fill", "transparent"); circle.setAttribute("stroke", noteColors[note[0]]);
+                circle.setAttribute("stroke-width", "2.5"); circle.setAttribute("stroke-dasharray", c);
+                circle.setAttribute("stroke-dashoffset", c); circle.classList.add("chart-circle");
+                ringG.appendChild(circle);
+                setTimeout(() => circle.style.strokeDashoffset = offset, 600 + (idx * 500));
+                r -= 6;
+            });
+
+            document.getElementById('result-title').innerHTML = `${top[0][0]} <br/> <span class="italic font-light"> & ${top[1][0]} Silhouette</span>`;
+            document.getElementById('formula-breakdown').innerHTML = top.map(n => `
+                <div class="glass p-10 rounded-[32px] border-t border-white/10">
+                    <p class="text-[11px] uppercase tracking-[0.5em] text-white/40 mb-4">${n[0]}</p>
+                    <p class="serif text-4xl font-light">${n[1]}%</p>
+                </div>
+            `).join('');
+
+            nextStep();
+        }
+
+        function saveProfile(btn) {
+            btn.innerHTML = `<span class="animate-pulse">Synthesizing...</span>`;
+            setTimeout(() => {
+                btn.innerHTML = "Identity Deployed ✓";
+                btn.classList.add('bg-rose-200');
+            }, 2000);
+        }
+
+        function resetApp() { location.reload(); }
+    </script>
+</body>
+</html>
